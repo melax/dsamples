@@ -1,0 +1,6 @@
+{ "extensionName": "DClassify",
+ "extensionPort": 12345,
+ "blockSpecs": [
+["r", "category", "category"],
+ ]
+}

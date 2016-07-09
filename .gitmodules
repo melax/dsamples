@@ -1,0 +1,6 @@
+[submodule "third_party/sandbox"]
+	path = third_party/sandbox
+	url = https://github.com/melax/sandbox.git
+[submodule "third_party/librealsense"]
+	path = third_party/librealsense
+	url = https://github.com/IntelRealSense/librealsense.git
