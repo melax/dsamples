@@ -13,13 +13,21 @@
 #include <glwin.h>
 #include <mesh.h>
 #include "dcam.h"  
-#include "physmodel.h"
+#include "physics.h"
 #include "wingmesh.h"  // to easily whip up some content
 
 #include "misc_gl.h"
 #include "misc_image.h"
 
 
+
+inline std::vector<float4> Planes(const std::vector<float3> &verts, const std::vector<int3> &tris) { std::vector<float4> planes; for (auto &t : tris) planes.push_back(PolyPlane({ verts[t[0]], verts[t[1]], verts[t[2]] }));  return planes; }
+
+inline float4 mostabove(std::vector<float4> &planes, const float3 &v)  // returns plane which v is above by the largest amount
+{
+	assert(planes.size());
+	return *std::max_element(planes.begin(), planes.end(), [&v](const float4 &a, const float4 &b) {return (dot(a, float4(v, 1)) < dot(b, float4(v, 1))); });
+}
 
 Shape AsShape(const WingMesh &m) { return Shape(m.verts, m.GenerateTris()); }
 
@@ -38,14 +46,6 @@ void draw(const Mesh &mesh)
 }
 
 
-void ModelDraw(PhysModel &model)
-{
-	glPushAttrib(GL_ALL_ATTRIB_BITS);
-	glEnable(GL_LIGHTING); glEnable(GL_LIGHT0); glColor3f(1, 1, 1);
-	for (auto &m : model.GetMeshes())   // GetMeshes() member syncs to rigidbody poses
-		MeshDraw(m);
-	glPopAttrib();
-}
 
 std::vector<float3> ObtainVoxelPointCloud(std::vector<float3> & dpts, float voxelSize, int minOccupants)
 {
