@@ -2,18 +2,18 @@
 ## DSamples
 Samples that use depth camera data.
 
-|-------------|--------------|
-| Sample      | Description  |
-|-------------|--------------|
-| dpca        | point cloud analysis methods that provide useful and fairly consistent input for a number of use cases    |
-| dclassify   | simple CNN based machine learning app with on-the-fly data collection, labelling, and training.           |
-| dphyspush   | shows direct manipulation of physically simulated rigidbodies using point cloud data                      |
-| ------------|--------------|
+| ------------- | -------------- |
+|  Sample       |  Description   |
+| ------------- | -------------- |
+|  dpca         |  point cloud analysis methods that provide useful and fairly consistent input for a number of use cases    |
+|  dclassify    |  simple CNN based machine learning app with on-the-fly data collection, labelling, and training.           |
+|  dphyspush    |  shows direct manipulation of physically simulated rigidbodies using point cloud data                      |
+| ------------  | -------------- |
 
 #### Release Info
-|-----------------|-------------|------|
-|software version | sqrt(-0.01) | this is just an "imaginary unofficial test release" of code samples that are in the process of being made available in an alpha state.  |
-|-----------------|-------------|------|
+| ----------------- | ------------- | ------ |
+| software version  |  sqrt(-0.01)  |  this is just an "imaginary unofficial test release" of code samples that are in the process of being made available in an alpha state.  |
+| ----------------- | ------------- | ------ |
 in other words, put here on github for early testing just to  make sure project files, submodules, and all source files are included and configured correctly.
 Feel free to submit any feedback or suggestions via github issues.
 
