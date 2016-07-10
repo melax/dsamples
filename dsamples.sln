@@ -20,6 +20,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "dphyspush", "dphyspush\dphy
 		{622186C4-6D7D-4288-B8FD-8F08419181C2} = {622186C4-6D7D-4288-B8FD-8F08419181C2}
 	EndProjectSection
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "dpca", "dpca\dpca.vcxproj", "{C3D0AEE8-AD80-4F00-BB79-DF47E61DCC54}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -60,6 +62,14 @@ Global
 		{E59B16B0-3F9C-4526-A7C3-77395C8FDBF3}.Release|Win32.Build.0 = Release|Win32
 		{E59B16B0-3F9C-4526-A7C3-77395C8FDBF3}.Release|x64.ActiveCfg = Release|x64
 		{E59B16B0-3F9C-4526-A7C3-77395C8FDBF3}.Release|x64.Build.0 = Release|x64
+		{C3D0AEE8-AD80-4F00-BB79-DF47E61DCC54}.Debug|Win32.ActiveCfg = Debug|Win32
+		{C3D0AEE8-AD80-4F00-BB79-DF47E61DCC54}.Debug|Win32.Build.0 = Debug|Win32
+		{C3D0AEE8-AD80-4F00-BB79-DF47E61DCC54}.Debug|x64.ActiveCfg = Debug|x64
+		{C3D0AEE8-AD80-4F00-BB79-DF47E61DCC54}.Debug|x64.Build.0 = Debug|x64
+		{C3D0AEE8-AD80-4F00-BB79-DF47E61DCC54}.Release|Win32.ActiveCfg = Release|Win32
+		{C3D0AEE8-AD80-4F00-BB79-DF47E61DCC54}.Release|Win32.Build.0 = Release|Win32
+		{C3D0AEE8-AD80-4F00-BB79-DF47E61DCC54}.Release|x64.ActiveCfg = Release|x64
+		{C3D0AEE8-AD80-4F00-BB79-DF47E61DCC54}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
