@@ -18,44 +18,44 @@
 CNN baby_cnn()
 {
 	CNN cnn({});
-	cnn.layers.push_back(new CNN::LConv({ 16,16,2 }, { 5,5,2,16 }, { 12,12,16 }));
+	cnn.layers.push_back(new CNN::LConv({ 16, 16, 2 }, { 5, 5, 2, 16 }, { 12, 12, 16 }));
 	cnn.layers.push_back(new CNN::LActivation<TanH>(12 * 12 * 16));
-	cnn.layers.push_back(new CNN::LMaxPool({ 12,12,16 }));
+	cnn.layers.push_back(new CNN::LMaxPool(int3(12, 12, 16)));
 	cnn.layers.push_back(new CNN::LFull(6 * 6 * 16, 32));
 	cnn.layers.push_back(new CNN::LActivation<TanH>(32));
 	cnn.layers.push_back(new CNN::LFull(32, 5));
-	cnn.layers.push_back(new CNN::LSoftMax(5));
+	cnn.layers.push_back(new CNN::LCrossEntropy(5));
 	cnn.Init(); // initializes weights
 	return cnn;
 }
 CNN small_cnn()
 {
 	CNN cnn({});
-	cnn.layers.push_back(new CNN::LConv({ 32,32,2 }, { 5,5,2,16 }, { 28,28,16 }));
+	cnn.layers.push_back(new CNN::LConv({ 32, 32, 2 }, { 5, 5, 2, 16 }, { 28, 28, 16 }));
 	cnn.layers.push_back(new CNN::LActivation<TanH>(28 * 28 * 16));
-	cnn.layers.push_back(new CNN::LMaxPool({ 28,28,16 }));
-	cnn.layers.push_back(new CNN::LMaxPool({ 14,14,16 }));
+	cnn.layers.push_back(new CNN::LMaxPool(int3(28, 28, 16)));
+	cnn.layers.push_back(new CNN::LMaxPool(int3(14, 14, 16)));
 	cnn.layers.push_back(new CNN::LFull(7 * 7 * 16, 32));
 	cnn.layers.push_back(new CNN::LActivation<TanH>(32));
 	cnn.layers.push_back(new CNN::LFull(32, 5));
-	cnn.layers.push_back(new CNN::LSoftMax(5));
+	cnn.layers.push_back(new CNN::LCrossEntropy(5));
 	cnn.Init();
 	return cnn;
 }
 CNN reg_cnn()  // probably too big to learn quickly with small ground truth sample size
 {
 	CNN cnn({});
-	cnn.layers.push_back(new CNN::LConv({ 64,64,2 }, { 5,5,2,16 }, { 60,60,16 }));
+	cnn.layers.push_back(new CNN::LConv({ 64, 64, 2 }, { 5, 5, 2, 16 }, { 60, 60, 16 }));
 	cnn.layers.push_back(new CNN::LActivation<TanH>(60 * 60 * 16));
-	cnn.layers.push_back(new CNN::LMaxPool({ 60,60,16 }));
-	cnn.layers.push_back(new CNN::LMaxPool({ 30,30,16 }));
-	cnn.layers.push_back(new CNN::LConv({ 15,15,16 }, { 8,8,16,256 }, { 8,8,64 }));
+	cnn.layers.push_back(new CNN::LMaxPool(int3(60, 60, 16)));
+	cnn.layers.push_back(new CNN::LMaxPool(int3(30, 30, 16)));
+	cnn.layers.push_back(new CNN::LConv({ 15, 15, 16 }, { 8, 8, 16, 256 }, { 8, 8, 64 }));
 	cnn.layers.push_back(new CNN::LActivation<TanH>(8 * 8 * 64));
-	cnn.layers.push_back(new CNN::LMaxPool({ 8,8,64 }));
+	cnn.layers.push_back(new CNN::LMaxPool(int3(8, 8, 64)));
 	cnn.layers.push_back(new CNN::LFull(4 * 4 * 64, 64));
 	cnn.layers.push_back(new CNN::LActivation<TanH>(64));
 	cnn.layers.push_back(new CNN::LFull(64, 5));
-	cnn.layers.push_back(new CNN::LSoftMax(5));
+	cnn.layers.push_back(new CNN::LCrossEntropy(5));
 	cnn.Init();
 	return cnn;
 }
@@ -76,7 +76,7 @@ int main(int argc, char *argv[]) try
 	GLWin glwin((argc==2)? (std::string("using previously trained cnn: ")+argv[1]).c_str() : "librealsense simple CNN classifier util - alpha version", 1500, 937);
 
 	RSCam dcam;
-    //dcam.enable_filter_depth = false;
+	//dcam.enable_filter_depth = false;
 	dcam.Init();
 	float depth_scale = (dcam.dev) ? dcam.dev->get_depth_scale() : 0.001f;  // to put into meters    // if file assume file is mm
 
@@ -202,10 +202,11 @@ int main(int argc, char *argv[]) try
 		
 		skip = clamp(skip, 1, 8);
 	};
-
-	if(dcam.dev->supports_option(rs::option::r200_lr_auto_exposure_enabled))
-		dcam.dev->set_option(rs::option::r200_lr_auto_exposure_enabled, 1);
-
+	try {
+		if (dcam.dev->supports_option(rs::option::r200_lr_auto_exposure_enabled))
+			dcam.dev->set_option(rs::option::r200_lr_auto_exposure_enabled, 1);
+	}
+	catch (...) {}
 	void* current_selection = NULL;
 	Pose camera;  // note this is the opengl camera, not the depth camera
 	camera.orientation = normalize(float4(0, -3, 0, 1));

@@ -17,6 +17,7 @@
 #include "../third_party/librealsense/include/librealsense/rs.hpp"
 #include "../third_party/librealsense/include/librealsense/rsutil.h"
 
+#if (_MSC_VER >= 1900)
 #ifdef _WIN64
 #ifdef _DEBUG
 #pragma comment(lib, "../third_party/librealsense/librealsense.vc14/realsense-s/obj/Debug-x64/realsense-sd.lib") 
@@ -30,6 +31,21 @@
 #pragma comment(lib, "../third_party/librealsense/librealsense.vc14/realsense-s/obj/Release-Win32/realsense-s.lib")   // pragma easier than using settings within project properties
 #endif // _DEBUG vs release for Win32 
 #endif // _WIN64 vs _WIN32
+#else 
+#ifdef _WIN64
+#ifdef _DEBUG
+#pragma comment(lib, "../third_party/librealsense/librealsense.vc12/realsense-s/obj/Debug-x64/realsense-sd.lib") 
+#else  // release x64
+#pragma comment(lib, "../third_party/librealsense/librealsense.vc12/realsense-s/obj/Release-x64/realsense-s.lib")   
+#endif // _DEBUG vs release for x64
+#else  // we have _WIN32
+#ifdef _DEBUG
+#pragma comment(lib, "../third_party/librealsense/librealsense.vc12/realsense-s/obj/Debug-Win32/realsense-sd.lib")  
+#else  // release 32 
+#pragma comment(lib, "../third_party/librealsense/librealsense.vc12/realsense-s/obj/Release-Win32/realsense-s.lib")   // pragma easier than using settings within project properties
+#endif // _DEBUG vs release for Win32 
+#endif // _WIN64 vs _WIN32
+#endif
 
 class DCam // generic intrinsics depth camera interface
 {

@@ -150,7 +150,7 @@ int main(int argc, char *argv[]) try
 	RSCam dcam;
 	dcam.Init((argc == 2) ? argv[1] : NULL); 
 	glwin.ViewAngle = dcam.fov().y;
-	Pose camera = { { 0, 0, 0 },normalize(float4{ 1, 0, -0.3f,  0 }) };
+	Pose camera = { { 0, 0, 0 },linalg::normalize(float4{ 1, 0, -0.3f,  0 }) };
 	float viewdist = 1.0f;
 	Mesh   mesh;
 	Image<unsigned short> dimage(dcam.dcamera());
