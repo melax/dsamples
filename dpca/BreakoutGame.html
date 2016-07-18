@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+<title> HTML and JavaScript Depth Camera Sample </title>
+<script type="text/javascript">
+
+ 
+ // Bill Mill's code below:
+var paddlex;
+var x = 25;
+var y = 250;
+var dx = 1.5;
+var dy = -4;
+var ctx;
+var WIDTH;
+var HEIGHT;
+//var paddlex;
+var paddleh = 10;
+var paddlew = 75;
+var rightDown = false;
+var leftDown = false;
+var canvasMinX = 0;
+var canvasMaxX = 0;
+var intervalId = false;
+var bricks;
+var NROWS = 5;
+var NCOLS = 5;
+var BRICKWIDTH;
+var BRICKHEIGHT = 15;
+var PADDING = 1;
+function init() {
+    ctx = document.getElementById('canvas2').getContext("2d");
+    WIDTH = 300;  // document.getElementById('canvas').width();
+    HEIGHT = 300; // document.getElementById('canvas').height();
+  BRICKWIDTH = (WIDTH/NCOLS) - 1;
+  paddlex = WIDTH / 2;
+  canvasMinX = 10; //  document.getElementById('canvas').offset().left;
+  canvasMaxX = canvasMinX + WIDTH;
+  intervalId = setInterval(draw, 20);
+}
+
+function circle(x,y,r) {
+  ctx.beginPath();
+  ctx.arc(x, y, r, 0, Math.PI*2, true);
+  ctx.closePath();
+  ctx.fill();
+}
+
+function rect(x,y,w,h) {
+  ctx.beginPath();
+  ctx.rect(x,y,w,h);
+  ctx.closePath();
+  ctx.fill();
+}
+
+function clear() {
+  ctx.clearRect(0, 0, WIDTH, HEIGHT);
+  rect(0,0,WIDTH,HEIGHT);
+}
+
+function onKeyDown(evt) {
+  if (evt.keyCode == 39) rightDown = true;
+  else if (evt.keyCode == 37) leftDown = true;
+}
+
+function onKeyUp(evt) {
+  if (evt.keyCode == 39) rightDown = false;
+  else if (evt.keyCode == 37) leftDown = false;
+}
+
+//$(document).keydown(onKeyDown);
+//$(document).keyup(onKeyUp);
+
+function onMouseMove(evt) {
+  if (evt.pageX > canvasMinX && evt.pageX < canvasMaxX) {
+    paddlex = Math.max(evt.pageX - canvasMinX - (paddlew/2), 0);
+    paddlex = Math.min(WIDTH - paddlew, paddlex);
+  }
+}
+
+//$(document).mousemove(onMouseMove);
+
+function initbricks() {
+    bricks = new Array(NROWS);
+    for (i=0; i < NROWS; i++) {
+        bricks[i] = new Array(NCOLS);
+        for (j=0; j < NCOLS; j++) {
+            bricks[i][j] = 1;
+        }
+    }
+}
+
+function drawbricks() {
+  for (i=0; i < NROWS; i++) {
+    ctx.fillStyle = rowcolors[i];
+    for (j=0; j < NCOLS; j++) {
+      if (bricks[i][j] == 1) {
+        rect((j * (BRICKWIDTH + PADDING)) + PADDING,
+             (i * (BRICKHEIGHT + PADDING)) + PADDING,
+             BRICKWIDTH, BRICKHEIGHT);
+      }
+    }
+  }
+}
+
+var ballr = 10;
+var rowcolors = ["#FF1C0A", "#FFFD0A", "#00A308", "#0008DB", "#EB0093"];
+var paddlecolor = "#FFFFFF";
+var ballcolor = "#FFFFFF";
+var backcolor = "#000000";
+
+var xmlhttp = 0;
+var testcount = 0;
+
+function draw() {
+
+    try {
+        if (xmlhttp == 0)
+        {
+            xmlhttp = new XMLHttpRequest();
+            //document.getElementById('jsout').innerHTML = "created xmlHttpRequest"
+            xmlhttp.open("GET", "http://localhost:12346/testing_js_testing_" + testcount++, true);
+            xmlhttp.send();
+            framedelay = 0
+            document.getElementById('jsout').innerHTML = "xmlHttpRequest "+ testcount + " sent ... (" + framedelay + ")"
+        }
+        if (xmlhttp.readystate < 4 ) {
+            document.getElementById('jsout').innerHTML = "xmlHttpRequest " + testcount + " sent ... (" + framedelay + ")"
+            framedelay++
+        }
+        if (xmlhttp.readyState == 4 )
+        {
+            framedelay =0 
+            document.getElementById('jsout').innerHTML = "xmlHttpRequest " + testcount + " done !!!  "
+            http_response = xmlhttp.responseText
+            document.getElementById('jsout2').innerHTML = "xmlHttpRequest " + testcount + " response:  " + http_response
+            // try pulling out a single item:
+            //bp = document.getElementById('jsout2').innerHTML
+            tokens = http_response.toString().split(" ");
+            handx = parseFloat(tokens[1]) / parseFloat(tokens[3])
+            document.getElementById('jsexample').innerHTML = "test at pulling data from returned data...  x position from above is " + handx
+            // test at doing something with the data, here we use the hand position to set the color of another paragraph in the document:
+            // console.log("bp=" + bp.toString() + "\n");
+            //v = bone_position(pdriver);  // get position of the important bone likely bone 1 palm or 13 index tip
+            paddlex = 150 - handx * 2 * 300;
+            if (paddlex < 0)
+                paddlex = 0;
+            if (paddlex > 300)
+                paddlex = 300;
+
+            xmlhttp = 0;
+
+        }
+    }
+    catch (e) {
+        document.getElementById('jsout').innerHTML = "FAILED FRAME!!!!!!!!!!!!, is the hand track server running?  javascript exception caught: " + e
+        //xmlhttp = 0;
+    }
+
+  ctx.fillStyle = backcolor;
+  clear();
+  ctx.fillStyle = ballcolor;
+  circle(x, y, ballr);
+
+  if (rightDown) paddlex += 5;
+  else if (leftDown) paddlex -= 5;
+  ctx.fillStyle = paddlecolor;
+  rect(paddlex, HEIGHT-paddleh, paddlew, paddleh);
+
+  drawbricks();
+
+  //want to learn about real collision detection? go read
+  // http://www.harveycartel.org/metanet/tutorials/tutorialA.html
+  rowheight = BRICKHEIGHT + PADDING;
+  colwidth = BRICKWIDTH + PADDING;
+  row = Math.floor(y/rowheight);
+  col = Math.floor(x/colwidth);
+  //reverse the ball and mark the brick as broken
+  if (y < NROWS * rowheight && row >= 0 && col >= 0 && bricks[row][col] == 1) {
+    dy = -dy;
+    bricks[row][col] = 0;
+  }
+
+  if (x + dx + ballr > WIDTH || x + dx - ballr < 0)
+    dx = -dx;
+
+  if (y + dy - ballr < 0)
+    dy = -dy;
+  else if (dy>0 && y + dy + ballr > HEIGHT - paddleh) {
+      if (x > paddlex && x < paddlex + paddlew) {
+           //move the ball differently based on where it hit the paddle
+          dx = 8 * ((x - (paddlex + paddlew / 2)) / paddlew);
+          dy = -dy;
+      }
+      else if (y + dy + ballr > HEIGHT)
+      {
+          dy = -dy;
+          initbricks(); //  clearInterval(intervalId);
+      }
+  }
+
+  x += dx;
+  y += dy;
+}
+
+function gameinit() {
+    if (intervalId == false)
+    {
+        init();
+        initbricks();
+    }
+    else
+    {
+        clearInterval(intervalId);
+        intervalId = false;
+    }
+}
+</script>
+</head>
+<body>
+    <h2>Depth Camera with HTML and JavaScript Sample</h2>
+    <p>
+        Depth camera blob Tracking added to <a href="http://billmill.org/">Bill Mill's</a>) JavaScript Canvas Tutorial (a Breakout clone).
+    </p>
+  <canvas id="canvas2" width="300" height="300"></canvas>
+  <p> Breakout style game with tracking to move the paddle.  </p>
+    <ul>
+        <li> Compile C++ project <b>dpca</b> with visual studio 2015.  Its best to use RELEASE mode.</li>
+        <li> Run the program <b>dpca_Release_Win32.exe</b> . </li>
+        <li> With that program in focus (alt-tab if necessary) hit the <b>'h'</b> key so that it will also be a mini web http server to feed blob pose (position) information into this web page.  </li>
+        <li> You might get a popup from the operating system asking if you wish to allow this .exe that you compiled to accept tcp/ip connections and serve http requests. </li>
+        <li>
+            Next click this button: <button type="button" onclick="gameinit()">Start Breakout</button> To start/stop the game in the canvas above.
+        </li>
+        <li>
+            by waving your hand or something else in the near view volume of the depth camera you will control the x position of the paddle above.
+        </li>
+    </ul>
+
+    <br />
+
+
+
+<p>
+   This sample is meant to show how one might route information originally derived from depth data into the web browser environment.  
+   If javascript is working and tracking server is up and running, then the updates should appear in the sections below:
+</p>
+<hr />
+<p id="jsout">
+the javascript status output section.  various function output is written here
+</p>
+    <hr />
+    <p id="jsout2">
+        another javascript response paragraph used to trace the http response.  
+    </p>
+<hr />
+
+<p id="jsexample">
+i just used this paragraph to trace the blob or hand 'x' position 
+</p>
+    <hr />
+<p>See the source of this .html file and the C++ source code handtrackserver.cpp and others for more information about how this all works.</p>
+    <hr />
+</body>
+</html>
+

@@ -22,6 +22,8 @@
 #include "dcam.h"  
 #include "mesh.h"
 #include "misc_gl.h"
+#include "misc.h"   
+#include "tcpsocket.h"
 
 // util drawing routines
 // most of this code is duplicated from testcov and ploidfit from the sandbox repo
@@ -150,16 +152,16 @@ int main(int argc, char *argv[]) try
 	RSCam dcam;
 	dcam.Init((argc == 2) ? argv[1] : NULL); 
 	glwin.ViewAngle = dcam.fov().y;
-	Pose camera = { { 0, 0, 0 },normalize(float4{ 1, 0, -0.3f,  0 }) };
-	float viewdist = 1.0f;
-	Mesh   mesh;
-	Image<unsigned short> dimage(dcam.dcamera());
-	float2 wrange = { 0.125f,0.625f };
-	
+	Image<unsigned short> dimage(dcam.dcamera()); // will hold the depth data that comes from the depth camera
+	Pose   camera    = { { 0, 0, 0 },normalize(float4{ 1, 0, -0.3f,  0 }) };
+	float  viewdist  = 1.0f;
+	float2 wrange    = { 0.125f,0.625f };
 	bool   pause     = false;
 	bool   recording = false;
-	bool   hold = false;
-	int    mode = 2;
+	bool   hold      = false;
+	int    mode      = 2;
+	SOCKET server    = INVALID_SOCKET;
+	int    tcp_port  = 12346;
 
 	glwin.keyboardfunc = [&](unsigned char key, int x, int y)->void
 	{
@@ -167,10 +169,11 @@ int main(int argc, char *argv[]) try
 		{
 		case 'q': case 27:  exit(0)      ; break;   // 27 is ESC
 		case ' ': pause     = !pause     ; break;
-		case '0': case '1': case '2': case '3': case '4':  mode = (key - '0')%4; break;
+		case '0': case '1': case '2': case '3': case '4':  mode = (key - '0')%4; break;   // select current viewing mode 
 		case '[': case'-': case '_':  wrange.y /= 1.125f     ; break;
 		case ']': case'=': case '+':  wrange.y *= 1.125f     ; break;
-		case 'b': dcam.addbackground(dimage.raster.data()); break;
+		case 'b': dcam.addbackground(dimage.raster.data())   ; break;
+		case 'h': server = start_server(tcp_port)            ; break;
 		default:  std::cout << "unassigned key (" << (int)key << "): '" << key << "'\n";   break;
 		}
 	};
@@ -205,6 +208,8 @@ int main(int argc, char *argv[]) try
 		std::tie<Pose, float3>(pa, va) = PrincipalAxes(pointcloud);
 		auto sd = sqrt(va);  // standard deviation  (often use 2*sd for that 90%interval)
 
+		if (server != INVALID_SOCKET)
+			do_server_thing_persist(server, ToString() << "pose " << pa);
 
 		glPushAttrib(GL_ALL_ATTRIB_BITS);
 		glViewport(0, 0, glwin.Width, glwin.Height);
@@ -288,6 +293,8 @@ int main(int argc, char *argv[]) try
 		glwin.PrintString({ 0,0 }, "Camera %s ", pause ? "paused" : "running");
 		glwin.PrintString({ 0,1 }, "Mode %d  %s ", mode, mode_description[mode]);
 		glwin.PrintString({ 0,2 }, "keys 0-3 to change draw mode, -/+ move backplane, space to pause");
+		if (server!=INVALID_SOCKET)
+			glwin.PrintString({ 0,3 }, "HTTP server enabled localhost:%d",tcp_port);
 		glwin.SwapBuffers();
 		
 	}
