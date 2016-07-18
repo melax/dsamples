@@ -209,7 +209,10 @@ int main(int argc, char *argv[]) try
 		auto sd = sqrt(va);  // standard deviation  (often use 2*sd for that 90%interval)
 
 		if (server != INVALID_SOCKET)
-			do_server_thing_persist(server, ToString() << "pose " << pa);
+		{
+			do_server_thing(server, ToString() << "pose " << pa);
+			// do_server_thing_persist(server, ToString() << "pose " << pa);    // if the frame rate is slow in a web page then you can try this call which attempts to re-use the same connection.  sometimes this fails though.
+		}
 
 		glPushAttrib(GL_ALL_ATTRIB_BITS);
 		glViewport(0, 0, glwin.Width, glwin.Height);

@@ -226,7 +226,9 @@ function gameinit() {
   <canvas id="canvas2" width="300" height="300"></canvas>
   <p> Breakout style game with tracking to move the paddle.  </p>
     <ul>
-        <li> Some web browsers didn't work.  You might need to load this page into the Chrome browser for windows.  </li>
+        <li> Some web browsers didn't work.  You might need to load this page into the Chrome browser for windows.  
+        On my desktop at the office it only worked in Microsoft's Internet Explorer.
+        </li>
         <li> Compile C++ project <b>dpca</b> with visual studio 2015.  Its best to use RELEASE mode.</li>
         <li> Run the program <b>dpca_Release_Win32.exe</b> . </li>
         <li> Hit '<b>h</b>'. The http server part of the principal component analysis sample is not on by default.  
@@ -237,6 +239,12 @@ function gameinit() {
         </li>
         <li>
             by waving your hand or something else in the near view volume of the depth camera you will control the x position of the paddle above.
+        </li>
+        <li>
+            If the framerate is slow, then it could be because the c++ dpca exe closes the socket after each http request.  
+            Look for comments in the code (in dcpa.cpp) for a one line code change that will attempt to reuse the socket.  
+            This made things in chrome run much faster.
+            I didn't leave that in by default since for some reason it didn't work for internet explorer.
         </li>
     </ul>
 
