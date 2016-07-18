@@ -229,7 +229,7 @@ function gameinit() {
         <li> Compile C++ project <b>dpca</b> with visual studio 2015.  Its best to use RELEASE mode.</li>
         <li> Run the program <b>dpca_Release_Win32.exe</b> . </li>
         <li> With that program in focus (alt-tab if necessary) hit the <b>'h'</b> key so that it will also be a mini web http server to feed blob pose (position) information into this web page.  </li>
-        <li> You might get a popup from the operating system asking if you wish to allow this .exe that you compiled to accept tcp/ip connections and serve http requests. </li>
+        <li> You might get a popup "Windows Firewall has blocked Access...".  This is the operating system asking if you wish to allow this .exe to accept tcp/ip connections and serve http requests. Given that you just compiled and ran this .exe yourself, you can see the code for yourself and determine that it should be safe.</li>
         <li>
             Next click this button: <button type="button" onclick="gameinit()">Start Breakout</button> To start/stop the game in the canvas above.
         </li>
