@@ -63,13 +63,12 @@ inline DCamera operator*(const DCamera &c, int s) { return{ c.dim() * s, c.focal
 inline DCamera operator/(const DCamera &c, int s) { return{ c.dim() / s, c.focal() / (float)s, c.principal() / (float)s ,c.depth_scale }; }
 
 //-----------------
-// using this 'greyscale' for double/float to/from byte representations with range 0 to 1 for float and 0 to 255 for byte representations  
-inline unsigned char togreyscale(float  x)        { return (unsigned char)clamp(x*255.0f, 0.0f, 255.0f); }
+// using this 'greyscale' for double/float to/from byte representations with range -0.5 to 0.5 for float and 0 to 255 for byte representations  
+inline unsigned char togreyscale(float  x)        { return (unsigned char)clamp((x + 0.5f)*255.0f, 0.0f, 255.0f); }
 inline unsigned char togreyscale(double x)        { return togreyscale((float)x); }
 inline unsigned char togreyscale(unsigned char x) { return x; }
-inline float         greyscaletofloat(unsigned char c) { return c / 255.0f; }
-inline double        greyscaletodouble(unsigned char c) { return c / 255.0; }
-
+inline float         greyscaletofloat(unsigned char c) { return c / 255.0f - 0.5f; } //centering transformation
+inline double        greyscaletodouble(unsigned char c) { return c / 255.0f - 0.5f; } //centering tranformation
 
 
 
@@ -149,7 +148,7 @@ template <class T> Image<T> Sample(const Image<T> &src, const DCamera &dstcam, T
 	Image<T> dst(dstcam);
 	int2 pp;
 	for (auto p : rect_iteration(dst.dim())) // for (int y = 0; y < dst.dim().y; y++) for (int x = 0; x < dst.dim().x; x++)
-		dst.pixel(p) = within_range(pp = asint2(src.cam.projectz(dst.cam.pose*dst.cam.deprojectz(asfloat2(p), 1.f))), { 0,0 }, src.dim() - int2(1, 1)) ? src.pixel(pp) : background;
+		dst.pixel(p) = within_range(pp = asint2(src.cam.projectz(dst.cam.pose*dst.cam.deprojectz(asfloat2(p), 1.f))), int2(0, 0), src.dim() - int2(1, 1)) ? src.pixel(pp) : background;
 	return dst;
 }
 
@@ -161,7 +160,7 @@ template <class T> Image<T> SampleD(const Image<T> &src, const DCamera &dstcam, 
 	float3 ppdir = dstcam.pose * dstcam.deprojectz(dstcam.principal(), 1.0f);
 	int2 pp;
 	for (auto p : rect_iteration(dst.dim())) // for (int y = 0; y < dst.dim().y; y++) for (int x = 0; x < dst.dim().x; x++)
-		dst.pixel(p) = within_range(pp = asint2(src.cam.projectz(dst.cam.pose*dst.cam.deprojectz(asfloat2(p), 1.f))), { 0,0 }, src.dim() - int2(1, 1)) ? (T)dot(ppdir,src.cam.deprojectz(pp,src.pixel(pp))) : background;
+		dst.pixel(p) = within_range(pp = asint2(src.cam.projectz(dst.cam.pose*dst.cam.deprojectz(asfloat2(p), 1.f))), int2(0, 0), src.dim() - int2(1, 1)) ? (T)dot(ppdir, src.cam.deprojectz(pp, src.pixel(pp))) : background;
 	return dst;
 }
 
@@ -203,7 +202,7 @@ inline Image<unsigned char> Threshold(const Image<unsigned short> &depthdata, st
 inline Image<unsigned char> DistanceTransform(Image<unsigned char> image)  // just manhattan
 {
 	int2 dim = image.dim();
-	auto cm = [dim](int2 p) {return clamp(p, { 0,0 }, dim - int2(1, 1)); };
+	auto cm = [dim](int2 p) {return clamp(p, int2(0,0), dim - int2(1, 1)); };
 	for(auto p: rect_iteration(dim))
 		image.pixel(p) = (unsigned char)std::min(255, std::min(std::min(image.pixel(cm(p - int2(1,0))) + 1, image.pixel(cm(p-int2(0,1))) + 1), image.pixel(p) + 0));
 	for (auto r : rect_iteration(dim))
@@ -241,7 +240,16 @@ template<class T> std::vector<float3> PointCloud(const Image<T> &dimage, float2 
 			pointcloud.push_back(  dimage.cam.deprojectz(float2(p),d )  );  
 	return pointcloud;
 }
+std::vector<float3> Mirror(std::vector<float3> points, float4 plane)
+{
+	for (auto &p : points)
+		p += plane.xyz()* (dot(float4(p, 1), plane)*-2.0f);
+	return points;
+}
 
+
+
+#if _MSC_VER > 1800
 auto PlaneSplit(const std::vector<float3> &points,float4 plane, float epsilon=0.02f)
 {
 	struct result { std::vector<float3> under, coplanar, over; };
@@ -254,19 +262,13 @@ auto PlaneSplit(const std::vector<float3> &points,float4 plane, float epsilon=0.
 	return result{b[0], b[1], b[2]};
 	//return make_tuple(move(b[0]), move(b[1]), move(b[2])); //  { under, coplanar, over };
 }
-std::vector<float3> Mirror(std::vector<float3> points, float4 plane)
-{
-	for (auto &p : points)
-		p += plane.xyz()* (dot(float4(p, 1), plane)*-2.0f);
-	return points;
-}
 auto MirrorPlaneSplit(const std::vector<float3> &points, float4 plane, float epsilon = 0.02f)
 {
 	auto r = PlaneSplit(points, plane, epsilon);
 	r.under = Mirror(std::move(r.under), plane);
 	return r;
 }
-
+#endif
 
 
 //  Segment() - not a generic routine...
@@ -331,9 +333,9 @@ Image<unsigned short> Segment(const Image<unsigned short> &depth, int entry_opti
 
 	DCamera dstcam({ 64,64 }, float2( avgdepth*64.0f/diam) , { 32,32 },depth.cam.depth_scale);  
 
-	float3 zd = normalize(dstcam.deprojectz(asfloat2(dstcam.dim()/2), 1.0f));
-	float3 yd = normalize(ProjectOntoPlane({ zd,0.0f }, dt.cam.deprojectz(float2(entry), 1.0f) - dstcam.deprojectz(asfloat2(dstcam.dim() / 2), 1.0f) ));
-	dstcam.pose.orientation = qmul(quat_from_to(dt.cam.deprojectz(dt.cam.principal(), 1.0f), dt.cam.deprojectz(com, 1.0f)), QuatFromAxisAngle({ 0,0,1 },angle)); //quatfrommat({ cross(yd, zd), yd, zd });
+	float3 zd = linalg::normalize(dstcam.deprojectz(asfloat2(dstcam.dim()/2), 1.0f));
+	float3 yd = linalg::normalize(ProjectOntoPlane({ zd,0.0f }, dt.cam.deprojectz(float2(entry), 1.0f) - dstcam.deprojectz(asfloat2(dstcam.dim() / 2), 1.0f) ));
+	dstcam.pose.orientation = qmul(quat_from_to(dt.cam.deprojectz(dt.cam.principal(), 1.0f), dt.cam.deprojectz(com, 1.0f)), QuatFromAxisAngle(float3(0, 0, 1), angle)); //quatfrommat({ cross(yd, zd), yd, zd });
 	dstcam.principal() = asfloat2(dstcam.dim())*0.5f;
 
 	g_com = linalg::clamp(com, float2(0, 0), float2(dt.cam.dim() - int2(1, 1)));

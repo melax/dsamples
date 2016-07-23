@@ -153,7 +153,7 @@ int main(int argc, char *argv[]) try
 	dcam.Init((argc == 2) ? argv[1] : NULL); 
 	glwin.ViewAngle = dcam.fov().y;
 	Image<unsigned short> dimage(dcam.dcamera()); // will hold the depth data that comes from the depth camera
-	Pose   camera    = { { 0, 0, 0 },normalize(float4{ 1, 0, -0.3f,  0 }) };
+	Pose   camera    = { { 0, 0, 0 },linalg::normalize(float4{ 1, 0, -0.3f,  0 }) };
 	float  viewdist  = 1.0f;
 	float2 wrange    = { 0.125f,0.625f };
 	bool   pause     = false;
