@@ -224,10 +224,11 @@ function gameinit() {
         Depth camera blob Tracking added to <a href="http://billmill.org/">Bill Mill's</a>) JavaScript Canvas Tutorial (a Breakout clone).
     </p>
   <canvas id="canvas2" width="300" height="300"></canvas>
-  <p> Breakout style game with tracking to move the paddle.  </p>
+  <p> Breakout style game with tracking to move the paddle.  Note the integration of depth data is in an experimental state. </p>
     <ul>
-        <li> Some web browsers didn't work.  You might need to load this page into the Chrome browser for windows.  
-        On my desktop at the office it only worked in Microsoft's Internet Explorer.
+        <li> This demo may or may not work.  It might depend on the combination of web browser and os and whatever settings are in use.  
+        I had success on my home desktop using the Chrome browser for windows.  IE on my windows10 desktop didn't seem to work.
+        Whereas, on my windows8 desktop at the office, its Chrome that didn't work (perhaps due to proxy settings), but Microsoft's Internet Explorer did work ok.
         </li>
         <li> Compile C++ project <b>dpca</b> with visual studio 2015.  Its best to use RELEASE mode.</li>
         <li> Run the program <b>dpca_Release_Win32.exe</b> . </li>
@@ -241,7 +242,7 @@ function gameinit() {
             by waving your hand or something else in the near view volume of the depth camera you will control the x position of the paddle above.
         </li>
         <li>
-            If the framerate is slow, then it could be because the c++ dpca exe closes the socket after each http request.  
+            If the framerate is slow or paddle movement updates are infrequent (feels slow responsive), then it could be because the c++ dpca exe closes the socket after each http request.  
             Look for comments in the code (in dcpa.cpp) for a one line code change that will attempt to reuse the socket.  
             This made things in chrome run much faster.
             I didn't leave that in by default since for some reason it didn't work for internet explorer.
