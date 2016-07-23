@@ -221,19 +221,25 @@ function gameinit() {
 <body>
     <h2>Depth Camera with HTML and JavaScript Sample</h2>
     <p>
-        Depth camera blob Tracking added to <a href="http://billmill.org/">Bill Mill's</a>) JavaScript Canvas Tutorial (a Breakout clone).
+        Depth camera blob Tracking added to (<a href="http://billmill.org/">Bill Mill's</a>) JavaScript Canvas Tutorial (a Breakout clone).
     </p>
   <canvas id="canvas2" width="300" height="300"></canvas>
-  <p> Breakout style game with tracking to move the paddle.  Note the integration of depth data is in an experimental state. </p>
-    <ul>
-        <li> This demo may or may not work.  It might depend on the combination of web browser and os and whatever settings are in use.  
+    <p>
+        Breakout style game with depth camera tracking to move the paddle.  </p>
+    <p>
+        Please note, this integration of depth data into a browser and this canvas demo is in an experimental state.
+        This demo may or may not work.  It might depend on the combination of web browser and os and whatever settings are in use.
         I had success on my home desktop using the Chrome browser for windows.  IE on my windows10 desktop didn't seem to work.
         Whereas, on my windows8 desktop at the office, its Chrome that didn't work (perhaps due to proxy settings), but Microsoft's Internet Explorer did work ok.
-        </li>
+    </p>
+    <h3>How to get the demo running:</h3>
+    <ul>
         <li> Compile C++ project <b>dpca</b> with visual studio 2015.  Its best to use RELEASE mode.</li>
         <li> Run the program <b>dpca_Release_Win32.exe</b> . </li>
-        <li> Hit '<b>h</b>'. The http server part of the principal component analysis sample is not on by default.  
-             With that program in focus (alt-tab if necessary) hit the <b>'h'</b> key so that it will also be a mini web http server to feed blob pose (position) information into this web page.  </li>
+        <li>
+            Hit '<b>h</b>'. The http server part of the principal component analysis sample is not on by default.
+            With that program in focus (alt-tab if necessary) hit the <b>'h'</b> key so that it will also be a mini web http server to feed blob pose (position) information into this web page.
+        </li>
         <li> You might get a popup "Windows Firewall has blocked Access...".  This is the operating system asking if you wish to allow this .exe to accept tcp/ip connections and serve http requests. Given that you just compiled and ran this .exe yourself, you can see the code for yourself and determine that it should be safe.</li>
         <li>
             Next click this button: <button type="button" onclick="gameinit()">Start Breakout</button> To start/stop the game in the canvas above.
@@ -242,10 +248,16 @@ function gameinit() {
             by waving your hand or something else in the near view volume of the depth camera you will control the x position of the paddle above.
         </li>
         <li>
-            If the framerate is slow or paddle movement updates are infrequent (feels slow responsive), then it could be because the c++ dpca exe closes the socket after each http request.  
-            Look for comments in the code (in dcpa.cpp) for a one line code change that will attempt to reuse the socket.  
-            This made things in chrome run much faster.
-            I didn't leave that in by default since for some reason it didn't work for internet explorer.
+            If the framerate is slow or paddle movement updates are infrequent (feels "choppy" or slow and responsive),
+            then it could be because the c++ dpca exe closes the socket after each http request.
+            Look for comments in the code (in dcpa.cpp) for a one line code change that will attempt to reuse the socket.
+            This made things in Chrome run much faster.
+            I didn't leave that in by default since for some reason the "keep-alive" version didn't work at all for internet explorer on work PC at the office,
+            whereas closing the socket each time worked fine and fast too.
+        </li>
+        <li>
+            If the demo doesn't work at first, try refreshing this web page, and restarting the dpca program and its httpd server.
+            If it still doesn't work, and you've tried a couple of different browsers, uhm, i dont know.
         </li>
     </ul>
 
@@ -273,6 +285,7 @@ i just used this paragraph to trace the blob or hand 'x' position
     <hr />
 <p>See the source of this .html file and the C++ source code handtrackserver.cpp and others for more information about how this all works.</p>
     <hr />
+    <p>special thanks to Bill Mill for making the original canvas tutorial, and allowing its use in this depth-camera-sample here.   </p>
 </body>
 </html>
 
