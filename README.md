@@ -23,8 +23,14 @@ Feel free to submit any feedback or suggestions via github issues.
 - samples only tested under windows OS.  the opengl-window initialization wrapper is windows specific at the moment.
 - requires visual studio 2015
 
-
+#### git submodules
 This repo depends on librealsense and sandbox repos on github.  
 So if you are using tortoise git, be sure the recursive checkbox is checked to automatically fetch these dependencies.
-Then open up the solution and everything should sucessfully build and run (assuming a depth camera is plugged in) on the first try.
+Alternatively, if you prefer to use the command line, then open a git bash shell and enter commands:
+```sh 
+$ git submodule init 
+$ git submodule update
+```
+With the repo and submodules cloned, open up the solution ( dsamples_vs2015.sln ) and everything should sucessfully build and run (assuming a depth camera is plugged in) on the first try.
+
 
