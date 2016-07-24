@@ -240,13 +240,19 @@ int main(int argc, char *argv[]) try
 
 
 
+		Image<unsigned short> dpimage = dcam.GetDepth();
 		auto dleft = (const uint8_t *)dcam.dev->get_frame_data(rs::stream::infrared);
 		Image<unsigned char> irimage(dcam.dcamera() , std::vector<unsigned char>(dleft, dleft + product(dcam.dim())));
-		Image<unsigned short> dpimage = dcam.GetDepth();
+		auto dcolor = (Image<byte3>({ dcam.dim() }, (const byte3*)dcam.dev->get_frame_data(rs::stream::color_aligned_to_depth)));
+		if (dpimage.dim().x>320)  // since sr300 might be 640x480 and we wanted 320x240
+		{
+			dpimage = DownSampleFst(dpimage);
+			irimage = DownSampleFst(irimage);
+			dcolor  = DownSampleFst(dcolor );
+		}
 		auto dp_image_g = Transform(dpimage, [&drange, depth_scale](unsigned short s) {return (unsigned char)clamp((int)(256.0f * ((s*depth_scale) - drange.x) / (drange.y - drange.x)), 0, 255); });
 		auto dp_image_c = torgb(dp_image_g); //  Transform(dpimage, [](unsigned short s) {return byte3((unsigned char)clamp(255 - s / 4, 0, 255)); });
 		auto ir_image_c = torgb(irimage);  //, [](unsigned char  c) {return byte3(c);}                                        );
-		auto dcolor = (Image<byte3>({ dcam.dim() }, (const byte3*)dcam.dev->get_frame_data(rs::stream::color_aligned_to_depth)));
 
 		std::vector<float3> pts;
 		std::vector<float3> outliers;
