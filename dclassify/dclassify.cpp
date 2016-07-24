@@ -81,8 +81,8 @@ int main(int argc, char *argv[]) try
 	float depth_scale = (dcam.dev) ? dcam.dev->get_depth_scale() : 0.001f;  // to put into meters    // if file assume file is mm
 
 	//glwin.ViewAngle = dcam.fov().y;
-	float viewdist        = 1.25f;
-	int    mousexold      = 0;
+	float viewdist        = 0.75f;
+
 	int skip = 4;  // selection subregion will be center of input and of size 16*skip squared, with 128x128 max.  will subsample as necessary to fit cnn input size
 	float2 drange = { 0.80f,0.30f };  // range of depth we care about.  note the .x > .y, this is so that closer things are more white and further things are more dark.
 
@@ -209,7 +209,7 @@ int main(int argc, char *argv[]) try
 	catch (...) {}
 	void* current_selection = NULL;
 	Pose camera;  // note this is the opengl camera, not the depth camera
-	camera.orientation = normalize(float4(0, -3, 0, 1));
+	camera.orientation = normalize(float4(3, 0, 1,0));
 	int gv = 240*3/2; int gh = 320*3/2;
 	int frame = 0;
 	std::vector<float> errorhistory(128,1.0f);
@@ -406,15 +406,16 @@ int main(int argc, char *argv[]) try
 				}
 				gui.pop();
 				{
-
-					gui.trackball(camera.orientation);
+					camera.orientation = qconj(camera.orientation);  // since trackball is normally used for adjusting another object's orientation, but here we're updating a the viewcamera looking at the object
+					gui.trackball(camera.orientation);  // may update camera.orientation only if user mouse drags within subwindow area
+					camera.orientation = qconj(camera.orientation);  // and back
 					gui.perspective();
 					glPushMatrix();
 					camera.position = float3(0, 0, (drange.x + drange.y)*0.5f) + qzdir(camera.orientation) *  viewdist;
 					glMultMatrixf(camera.inverse().matrix());
 
 					glColor3f(1, 1, 1);
-					glwirefrustumz(dcam.deprojectextents(), { 0.1f,1.0f });  // draw the camera frustum volume
+					glwirefrustumz(dcam.deprojectextents(), { 0.1f,1.0f });  // draw the depth camera frustum volume
 					glColor3f(0, 1, 0.5f);
 					glwirefrustumz(sample_dp.cam.deprojectextents(), drange);  // draw the sample camera frustum volume
 					drawpoints(pts, { 0   ,1,0 });
