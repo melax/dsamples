@@ -180,14 +180,14 @@ int main(int argc, char *argv[]) try
 			dimage = dcam.GetDepth();
 
 		glPushAttrib(GL_ALL_ATTRIB_BITS);
-		glViewport(0, 0, glwin.Width, glwin.Height);
+		glViewport(0, 0, glwin.res.x, glwin.res.y);
 		glClearColor(0.1f, 0.1f, 0.15f, 1);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		glMatrixMode(GL_PROJECTION);
 		glPushMatrix();
 		glLoadIdentity();
-		gluPerspective(glwin.ViewAngle, (double)glwin.Width / glwin.Height, 0.01f, 50.0f);
+		gluPerspective(glwin.ViewAngle, (double)glwin.aspect_ratio(), 0.01f, 50.0f);
 
 		glMatrixMode(GL_MODELVIEW);
 		glPushMatrix();

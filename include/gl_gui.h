@@ -40,8 +40,8 @@ public:
 	}
 	GLWin &glwin;
 	void * &selection;
-	int2 mouse() { return{ glwin.mousepos.x, glwin.Height - glwin.mousepos.y }; }
-	int2 mouse_prev() { return{ glwin.mousepos_previous.x, glwin.Height - glwin.mousepos_previous.y }; }
+	int2 mouse() { return{ glwin.mousepos.x, glwin.res.y - glwin.mousepos.y }; }
+	int2 mouse_prev() { return{ glwin.mousepos_previous.x, glwin.res.y - glwin.mousepos_previous.y }; }
 	std::vector<int2x2> bounds; //  offset, size;
 	int2 &dims() { return bounds.back()[1]; }
 	int2 &offset() { return bounds.back()[0]; }
@@ -58,7 +58,7 @@ public:
 	void set()
 	{
 		if (bounds.size() == 0)
-			bounds.push_back({ { 0, 0}, {glwin.Width, glwin.Height } });
+			bounds.push_back({ { 0, 0}, glwin.res });
 		bounds.back()[1] = max(int2(0,0), bounds.back()[1]);
 		glViewport(bounds.back()[0].x, bounds.back()[0].y, bounds.back()[1].x, bounds.back()[1].y);
 		glScissor (bounds.back()[0].x, bounds.back()[0].y, bounds.back()[1].x, bounds.back()[1].y);
@@ -71,7 +71,7 @@ public:
 	GUI(GLWin &glwin, void *&s, float4 c = { 0,0,0,0 }) :glwin(glwin), selection(s)
 	{
 		if (!glwin.MouseState) s = NULL;  // not sure
-		bounds.push_back({ { 0, 0},{ glwin.Width, glwin.Height } });
+		bounds.push_back({ { 0, 0}, glwin.res });
 		set();
 		glClearColor(c.x,c.y,c.z,c.w);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
