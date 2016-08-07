@@ -29,12 +29,12 @@ public:
 	float2&                          principal()       { return principal_; }
 	const float2&                    principal() const { return principal_; }
 	DCamera() {}
-	DCamera(int2 dim, float2 focal, float2 principal,float depth_scale) :dim_(dim), focal_(focal), principal_(principal),depth_scale(depth_scale) {}
+	DCamera(int2 dim, float2 focal, float2 principal,float depth_scale,Pose pose=Pose()) :dim_(dim), focal_(focal), principal_(principal),depth_scale(depth_scale),pose(pose) {}
 	DCamera(int2 dim) :dim_(dim), focal_(asfloat2(dim)), principal_(asfloat2(dim)/2.0f) {}
 	float3   deprojectz(const float2 &p, float d)       const { return float3((p.x - principal().x) / focal().x, (p.y - principal().y) / focal().y, 1.0f) * d; }
 	float3   deprojectz(const int2 &p,unsigned short d) const { return deprojectz(asfloat2(p), (float)d); }
 	float2   projectz(const float3 &v)                  const { return v.xy() / v.z * focal() + principal(); }
-	std::vector<float2> projectz(const std::vector<float3> &pts) { return Transform(pts, [&](const float3 &v) {return this->projectz(v); }); }  // array version of projectz
+	std::vector<float2> projectz(const std::vector<float3> &pts) const { return Transform(pts, [&](const float3 &v) {return this->projectz(v); }); }  // array version of projectz
 	float2x2 deprojectextents()                         const { return float2x2(deprojectz(float2(0, 0), 1.0f).xy(), deprojectz(asfloat2(dim()), 1.0f).xy()); }  // upper left and lower right xy corners at plane z==1
 	float2 fov() const { return{ atan2(principal().x + 0.5f, focal().x) + atan2(dim().x - principal().x - 0.5f, focal().x), atan2(principal().y + 0.5f, focal().y) + atan2(dim().y - principal().y - 0.5f, focal().y) }; }   // using ds4 conventions with that 0.5 offset
 	bool intrinsicsimport(std::string filename)
@@ -57,18 +57,19 @@ public:
 inline std::ostream & operator << (std::ostream & out, const DCamera& dcam) { return out << dcam.dim() << " " << dcam.focal() << "  " << dcam.principal() << " " << dcam.depth_scale; }
 template<class F> void visit_fields(DCamera & cam, F f) { f("dims", cam.dim_); f("focal", cam.focal_); f("principal", cam.principal_); f("depth_scale", cam.depth_scale); }
 
-inline DCamera camcrop(const DCamera &c, int2 offset, int2 dim) { return{ dim, c.focal(), c.principal() - float2((float)offset.x, (float)offset.y) ,c.depth_scale}; }
-inline DCamera camsub(const DCamera &c, int s) { return{ c.dim() / s, c.focal() / (float)s, c.principal() / (float)s ,c.depth_scale }; }
-inline DCamera operator*(const DCamera &c, int s) { return{ c.dim() * s, c.focal() * (float)s, c.principal() * (float)s ,c.depth_scale }; }
-inline DCamera operator/(const DCamera &c, int s) { return{ c.dim() / s, c.focal() / (float)s, c.principal() / (float)s ,c.depth_scale }; }
+inline DCamera camcrop  (const DCamera &c, int2 offset, int2 dim) { return{ dim, c.focal(), c.principal() - float2((float)offset.x, (float)offset.y) ,c.depth_scale, c.pose}; }
+inline DCamera camsub   (const DCamera &c, int s) { return{ c.dim() / s, c.focal() / (float)s, c.principal() / (float)s ,c.depth_scale , c.pose}; }
+inline DCamera operator*(const DCamera &c, int s) { return{ c.dim() * s, c.focal() * (float)s, c.principal() * (float)s ,c.depth_scale , c.pose}; }
+inline DCamera operator/(const DCamera &c, int s) { return{ c.dim() / s, c.focal() / (float)s, c.principal() / (float)s ,c.depth_scale , c.pose}; }
 
 //-----------------
-// using this 'greyscale' for double/float to/from byte representations with range -0.5 to 0.5 for float and 0 to 255 for byte representations  
-inline unsigned char togreyscale(float  x)        { return (unsigned char)clamp((x + 0.5f)*255.0f, 0.0f, 255.0f); }
+// using this 'greyscale' for double/float to/from byte representations with range 0 to 1 for float and 0 to 255 for byte representations  
+inline unsigned char togreyscale(float  x)        { return (unsigned char)clamp(x*255.0f, 0.0f, 255.0f); }
 inline unsigned char togreyscale(double x)        { return togreyscale((float)x); }
 inline unsigned char togreyscale(unsigned char x) { return x; }
-inline float         greyscaletofloat(unsigned char c) { return c / 255.0f - 0.5f; } //centering transformation
-inline double        greyscaletodouble(unsigned char c) { return c / 255.0f - 0.5f; } //centering tranformation
+inline float         greyscaletofloat(unsigned char c) { return c / 255.0f; }
+inline double        greyscaletodouble(unsigned char c) { return c / 255.0; }
+
 
 
 
@@ -115,8 +116,8 @@ template <class T> struct Image
 	const int2 dim() const         { return cam.dim(); }
 	T&         pixel(int2 p)       { return raster[p.y*dim().x + p.x]; }
 	const T&   pixel(int2 p) const { return raster[p.y*dim().x + p.x]; }
-	Image(int2 dim    ) :cam(dim), raster(dim.x, dim.y  ) {}
-//	Image(int2 dim,T t) :cam(dim), raster(dim.x, dim.y,t) {}
+	Image(int2 dim    ) :cam(dim), raster(product(dim)) {}
+	Image(int2 dim,T t) :cam(dim), raster(product(dim),t) {}
 	Image(DCamera cam)  :cam(cam), raster(cam.dim().x*cam.dim().y,T(0)) {}
 	Image(DCamera cam, std::vector<T> data) :cam(cam), raster(data)  {}
 	Image(int2    dim, std::vector<T> data) :cam(dim), raster(data)  {}
@@ -240,16 +241,24 @@ template<class T> std::vector<float3> PointCloud(const Image<T> &dimage, float2 
 			pointcloud.push_back(  dimage.cam.deprojectz(float2(p),d )  );  
 	return pointcloud;
 }
-std::vector<float3> Mirror(std::vector<float3> points, float4 plane)
+
+
+#if _MSC_VER > 1800
+
+struct VertexPT { float3 position; float2 texcoord; };
+template<class T> std::vector<VertexPT> PointCloudT(const Image<T> &dimage, float2 filter_range, float depth_scale = 0.001f)
 {
-	for (auto &p : points)
-		p += plane.xyz()* (dot(float4(p, 1), plane)*-2.0f);
-	return points;
+	std::vector<VertexPT> pointcloud;
+	float d;
+	for (int2 p : rect_iteration(dimage.dim()))  // p.y and p.x iterate over dimensions of image
+		if (within_range(d = (dimage.pixel(p)* depth_scale), filter_range))
+			pointcloud.push_back({ dimage.cam.deprojectz(float2(p), d), float2(p) / float2(dimage.dim()) });
+	return pointcloud;
 }
 
 
 
-#if _MSC_VER > 1800
+
 auto PlaneSplit(const std::vector<float3> &points,float4 plane, float epsilon=0.02f)
 {
 	struct result { std::vector<float3> under, coplanar, over; };
@@ -262,6 +271,12 @@ auto PlaneSplit(const std::vector<float3> &points,float4 plane, float epsilon=0.
 	return result{b[0], b[1], b[2]};
 	//return make_tuple(move(b[0]), move(b[1]), move(b[2])); //  { under, coplanar, over };
 }
+std::vector<float3> Mirror(std::vector<float3> points, float4 plane)
+{
+	for (auto &p : points)
+		p += plane.xyz()* (dot(float4(p, 1), plane)*-2.0f);
+	return points;
+}
 auto MirrorPlaneSplit(const std::vector<float3> &points, float4 plane, float epsilon = 0.02f)
 {
 	auto r = PlaneSplit(points, plane, epsilon);
@@ -269,6 +284,7 @@ auto MirrorPlaneSplit(const std::vector<float3> &points, float4 plane, float eps
 	return r;
 }
 #endif
+
 
 
 //  Segment() - not a generic routine...
@@ -283,9 +299,9 @@ Image<unsigned short> Segment(const Image<unsigned short> &depth, int entry_opti
 	auto dim = depth.dim();
 	Image<unsigned short> depthsmall = DownSampleMin(DownSampleMin(depth));
 	ushort2 wranged = ushort2(wrange / depth_scale);
-	auto dt = DistanceTransform(Threshold(depthsmall, [wranged](unsigned short d) {return d >= wranged.x && d < wranged.y; }));
+	auto dt = DistanceTransform(Threshold(depthsmall, [wranged](unsigned short d) {return /*d >= wranged.x && */d < wranged.y; }));
 
-	int2 entry(0, 0);
+	int2 entry = (entry_options == 1) ? int2(dt.dim().x/2, dt.dim().y -1) : (entry_options==4)? int2(dt.dim().x-1,dt.dim().y/2): (entry_options == 8) ? int2(0, dt.dim().y / 2) : int2(0,0);
 	if (entry_options & 1) for (int2 p(0, dt.dim().y-1); p.x < dt.dim().x;p.x++) if (dt.pixel(p) > dt.pixel(entry))  entry = p;
 	if (entry_options & 2) for (int2 p(0, 0           ); p.x < dt.dim().x;p.x++) if (dt.pixel(p) > dt.pixel(entry))  entry = p;
 	if (entry_options & 4) for (int2 p(dt.dim().x-1, 0); p.y < dt.dim().y;p.y++) if (dt.pixel(p) > dt.pixel(entry))  entry = p;
@@ -325,10 +341,10 @@ Image<unsigned short> Segment(const Image<unsigned short> &depth, int entry_opti
 	const float diam = 0.17f; //  diameter_of_interest =
 	if (count)
 	{
+		angle = atan2((float)com.x - entry.x, (float)entry.y - com.y);
 		scale = 2.0f / clamp(avgdepth / 0.450f, 0.55f, 2.0f);     // magic number alert, the 45cm comes from using it previously as a target distance before i had adaptive scale
 		float exrad = dot(extreme - com, normalize(com - float2(entry)));
 		com +=  normalize(com - float2(entry)) * (exrad - diam/2.0f/avgdepth * dt.cam.focal().x)  ;   // shift com to be half of diam ~20cm (ie 10cm) away from extreme point 
-		angle = atan2((float)com.x - entry.x, (float)entry.y - com.y);
 	}
 
 	DCamera dstcam({ 64,64 }, float2( avgdepth*64.0f/diam) , { 32,32 },depth.cam.depth_scale);  
