@@ -73,7 +73,7 @@ int main(int argc, char *argv[]) try
 	auto cnn = cnntypes[cnn_type]();
 	int2 inputsize = ((CNN::LConv*)cnn.layers[0])->indims.xy();   // depending which is created, inputsize will be either 16x16 or 32x32
 
-	GLWin glwin((argc==2)? (std::string("using previously trained cnn: ")+argv[1]).c_str() : "librealsense simple CNN classifier util - alpha version", 1500, 937);
+	GLWin glwin((argc==2)? (std::string("using previously trained cnn: ")+argv[1]).c_str() : "librealsense simple CNN classifier util - alpha version", 1240, 660);
 
 	RSCam dcam;
 	//dcam.enable_filter_depth = false;
@@ -83,7 +83,7 @@ int main(int argc, char *argv[]) try
 	//glwin.ViewAngle = dcam.fov().y;
 	float viewdist        = 0.75f;
 
-	int skip = 4;  // selection subregion will be center of input and of size 16*skip squared, with 128x128 max.  will subsample as necessary to fit cnn input size
+	int skip = 10;  // selection subregion will be center of input and of size 16*skip squared, with 128x128 max.  will subsample as necessary to fit cnn input size
 	float2 drange = { 0.80f,0.30f };  // range of depth we care about.  note the .x > .y, this is so that closer things are more white and further things are more dark.
 
 	std::default_random_engine rng;
@@ -200,7 +200,7 @@ int main(int argc, char *argv[]) try
 		default:  std::cout << "unassigned key (" << (int)key << "): '" << key << "'\n";   break;
 		}
 		
-		skip = clamp(skip, 1, 8);
+		skip = clamp(skip, 1, 10);
 	};
 	try {
 		if (dcam.dev->supports_option(rs::option::r200_lr_auto_exposure_enabled))
@@ -351,7 +351,7 @@ int main(int argc, char *argv[]) try
 				if (gui.focus(&dp_image_c))
 				{
 					auto c =  (gui.mouse()-gui.offset()) * dp_image_c.dim() / gui.dims() - dp_image_c.dim() / 2;
-					skip = clamp(std::max(abs(c.x), abs(c.y)) / (16 / 2), 1, 8);
+					skip = clamp(std::max(abs(c.x), abs(c.y)) / (16 / 2), 1, 10);
 				}
 				gui.pop();
 				gui.drawimagem(ir_image_c);
@@ -360,7 +360,7 @@ int main(int argc, char *argv[]) try
 				if (gui.focus(&ir_image_c))
 				{
 					auto c = (gui.mouse() - gui.offset())* ir_image_c.dim() / gui.dims() - ir_image_c.dim() / 2;
-					skip = clamp(std::max(abs(c.x), abs(c.y)) / (16 / 2), 1, 8);
+					skip = clamp(std::max(abs(c.x), abs(c.y)) / (16 / 2), 1, 10);
 				}
 			}
 			gui.pop();
@@ -385,8 +385,8 @@ int main(int argc, char *argv[]) try
 					auto regions = gui.partition_y(3);
 					gui.set(regions[0]); 
 					{
-						gui.slider(skip, { 1,8 }, "samplearea ");
-						skip = clamp(skip, 1, 8);
+						gui.slider(skip, { 1,10 }, "samplearea ");
+						skip = clamp(skip, 1, 10);
 					}
 					//gui.pop();
 					//gui.splityc(slider_set/3-1);
