@@ -214,7 +214,7 @@ int main(int argc, char *argv[]) try
 	int frame = 0;
 	std::vector<float> errorhistory(128,1.0f);
 	SOCKET server = INVALID_SOCKET;
-	int enable_server=0;
+	int enable_server=1;
 
 
 	while (glwin.WindowUp())
